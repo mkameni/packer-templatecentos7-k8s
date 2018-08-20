@@ -1,0 +1,126 @@
+{
+  "_comment": "Build with `packer build -var-file=./releases/1804.json centos7-base.json`",
+  "builders": [
+    {
+      "boot_command": [
+        "<tab> text ks=http://{{ .HTTPIP }}:{{ .HTTPPort}}/{{ user `kickstart` }}<enter>"
+      ],
+      "disk_size": "{{ user `disk_size` }}",
+      "guest_os_type": "{{ user `vmware_guest_os_type` }}",
+      "headless": "{{ user `headless` }}",
+      "http_directory": "http",
+      "iso_checksum": "{{ user `iso_checksum` }}",
+      "iso_checksum_type": "{{ user `iso_checksum_type` }}",
+      "iso_urls": [
+        "{{ user `iso_path` }}/{{ user `iso_name` }}",
+        "{{ user `iso_url` }}"
+      ],
+      "type": "vmware-iso",
+      "vm_name": "{{ user `vm_name` }}",
+      "output_directory": "output-{{ user `vm_name` }}-vmware-iso",
+      "shutdown_command": "{{ user `shutdown_command` }}",
+      "ssh_password": "{{ user `ssh_password` }}",
+      "ssh_username": "{{ user `ssh_username` }}",
+      "ssh_wait_timeout": "10000s",
+      "tools_upload_flavor": "linux",
+      "vmx_data": {
+        "cpuid.coresPerSocket": "1",
+        "memsize": "{{ user `memory` }}",
+        "numvcpus": "{{ user `cpus` }}"
+      }
+    },
+    {
+      "boot_command": [
+        "<tab> text ks=http://{{ .HTTPIP }}:{{ .HTTPPort}}/{{ user `kickstart` }}<enter>"
+      ],
+      "disk_size": "{{ user `disk_size` }}",
+      "guest_additions_path": "VBoxGuestAdditions_{{.Version}}.iso",
+      "guest_os_type": "{{ user `virtualbox_guest_os_type` }}",
+      "hard_drive_interface": "sata",
+      "headless": "{{ user `headless` }}",
+      "http_directory": "http",
+      "iso_checksum": "{{ user `iso_checksum` }}",
+      "iso_checksum_type": "{{ user `iso_checksum_type` }}",
+      "iso_urls": [
+        "{{ user `iso_path` }}/{{ user `iso_name` }}",
+        "{{ user `iso_url` }}"
+      ],
+      "type": "virtualbox-iso",
+      "vm_name": "{{ user `vm_name` }}",
+      "output_directory": "output-{{ user `vm_name` }}-virtualbox-iso",
+      "shutdown_command": "{{ user `shutdown_command` }}",
+      "ssh_password": "{{ user `ssh_password` }}",
+      "ssh_username": "{{ user `ssh_username` }}",
+      "ssh_wait_timeout": "10000s",
+      "vboxmanage": [
+        [ "modifyvm", "{{.Name}}", "--memory", "{{ user `memory` }}"  ],
+        [ "modifyvm", "{{.Name}}", "--cpus", "{{ user `cpus` }}"  ],
+        [ "modifyvm", "{{.Name}}", "--paravirtprovider", "{{ user `virtualbox_paravirtprovider` }}" ],
+        [ "modifyvm", "{{.Name}}", "--nictype1", "{{ user `virtualbox_nictype` }}"  ]
+      ],
+      "virtualbox_version_file": ".vbox_version"
+    }
+  ],
+  "post-processors": [
+    {
+      "type": "vagrant",
+      "keep_input_artifact": false,
+      "output": "box/{{.Provider}}/{{user `vm_name`}}-{{user `version`}}.box"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "expect_disconnect": true,
+      "environment_vars": [
+        "CM={{user `cm`}}",
+        "CM_VERSION={{user `cm_version`}}",
+        "DESKTOP={{user `desktop`}}",
+        "DOCKER={{user `docker`}}",
+        "UPDATE={{user `update`}}",
+        "INSTALL_VAGRANT_KEY={{user `install_vagrant_key`}}",
+        "SSH_USERNAME={{user `ssh_username`}}",
+        "SSH_PASSWORD={{user `ssh_password`}}",
+        "http_proxy={{user `http_proxy`}}",
+        "https_proxy={{user `https_proxy`}}",
+        "ftp_proxy={{user `ftp_proxy`}}",
+        "rsync_proxy={{user `rsync_proxy`}}",
+        "no_proxy={{user `no_proxy`}}"
+      ],
+      "execute_command": "echo 'vagrant' | {{.Vars}} sudo -E -S bash '{{.Path}}'",
+      "scripts": [
+        "scripts/bootstrap.sh",
+        "scripts/vm-tools.sh",
+        "scripts/cleanup.sh"
+      ]
+    }
+  ],
+  "variables": {
+    "cpus": "1",
+    "disk_size": "20536",
+    "memory": "1024",
+    "cutom_script": ".",
+    "docker": "false",
+    "ftp_proxy": "{{env `ftp_proxy`}}",
+    "headless": "",
+    "http_proxy": "{{env `http_proxy`}}",
+    "https_proxy": "{{env `https_proxy`}}",
+    "install_vagrant_key": "true",
+    "kickstart": "ks7.cfg",
+    "iso_path": "/Volumes/Storage/software/centos",
+    "no_proxy": "{{env `no_proxy`}}",
+    "rsync_proxy": "{{env `rsync_proxy`}}",
+    "shutdown_command": "echo 'vagrant'|sudo -S shutdown -P now",
+    "ssh_password": "vagrant",
+    "ssh_username": "vagrant",
+    "update": "true",
+    "vagrantfile_template": "vagrantfile.tpl",
+    "version": "1.0.{{timestamp}}",
+    "virtualbox_guest_os_type": "RedHat_64",
+    "virtualbox_paravirtprovider": "default",
+    "virtualbox_nictype": "virtio",
+    "vm_name": "templatecentos7-k8s",
+    "vmware_guest_os_type": "CentOS 64-bit",
+    "cloud_token": "wjmUs6s4wXBUgg.atlasv1.LuggPzeJsuUKoTIbhmhwPdG8lcwcGPDSbHqLVTn4phVRmyeITrKkzfuS2OZSB1ZJXR8"
+  }
+}
